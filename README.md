@@ -4,6 +4,10 @@ ThalCare is a mobile application built with **React Native** to improve the qual
 
 > **Status:** 🚧 Active Development V2.0
 
+## 📱 Demo
+
+https://github.com/user-attachments/assets/7de2d1ce-487e-4157-b144-6e68886c985d
+
 ## ✨ Features
 
 ### ✅ Authentication
