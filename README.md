@@ -1,167 +1,158 @@
-# ThalCare
+# 🩸 ThalCare
 
-ThalCare is a React Native (Expo) mobile application designed to help thalassemia patients manage their healthcare journey. The app aims to simplify patient access to essential health information, appointments, and reminders through a clean, user-friendly interface.
+ThalCare is a mobile application built with **React Native** to improve the quality of life for thalassemia patients by simplifying healthcare management and connecting patients with blood donors. The app aims to provide an accessible digital platform where patients can securely manage their health information while enabling donors to support the thalassemia community more effectively.
 
-> This repository currently contains **Version 1**, which focuses on user authentication and project structure.
+> **Status:** 🚧 Active Development V2.0
 
----
+## ✨ Features
 
-## Features
+### ✅ Authentication
 
-### Authentication
+* Secure user registration and login
+* Firebase Authentication integration
+* Password reset via email
 
-- Firebase Email & Password Authentication
-- User Registration
-- User Login
-- Password Reset via Email
-- Secure Logout
+### ✅ User Profiles
 
-### User Interface
+* Cloud Firestore integration
+* Secure profile storage
+* Separate profile data for different user roles
 
-- Splash Screen
-- Login Screen
-- Registration Screen
-- Forgot Password Screen
-- Home Screen (Placeholder)
+### ✅ Role-Based Experience
 
-### Architecture
+Users choose their role during onboarding:
 
-- React Native (Expo)
-- Firebase Authentication
-- React Navigation
-- Reusable Components
-- Form Validation
+* 🩸 **Patient**
+* ❤️ **Blood Donor**
 
----
+Each role is provided with its own dedicated dashboard and user experience.
 
-## Tech Stack
+### ✅ Dashboards
 
-- React Native
-- Expo
-- Firebase Authentication
-- React Navigation
-- JavaScript
+#### Patient Dashboard
 
----
+* Personalized patient interface
+* Foundation for future appointment tracking, transfusion history, medication reminders, and health monitoring
 
-## Project Structure
+#### Donor Dashboard
 
-```
-src/
-│
-├── components/
-│   ├── ThalCareLogo
-│   ├── WaveFooter
-│   ├── AuthTextInput
-│   └── PrimaryButton
-│
-├── screens/
-│   ├── Splash
-│   ├── Login
-│   ├── Register
-│   ├── ForgotPassword
-│   └── Home
-│
-├── navigation/
-│   ├── Auth Stack
-│   └── Main Stack
-│
-├── services/
-│   └── Firebase Authentication
-│
-├── utils/
-│   └── Form Validation
-│
-└── constants/
-    └── Theme
-```
+* Dedicated donor interface
+* Designed for future blood donation requests, donation history, and patient matching
 
----
+## 🛠️ Tech Stack
 
-## App Flow
+### Frontend
+
+* React Native
+* TypeScript
+* React Navigation
+
+### Backend & Services
+
+* Firebase Authentication
+* Cloud Firestore
+
+## 📱 Current App Flow
 
 ```
 Splash Screen
       │
       ▼
-Login ◄──────────── Register
-  │                    │
-  └──────────┬─────────┘
-             ▼
-      Authentication
-             ▼
-           Home
+ Login / Register
+      │
+      ▼
+ Account Type Selection
+(Patient / Blood Donor)
+      │
+      ▼
+ Create Profile
+      │
+      ▼
+Role-Based Dashboard
 ```
 
----
+## 🚀 Planned Features
 
-## Installation
+* Blood donation request system
+* Intelligent donor matching
+* Blood compatibility checking
+* Appointment scheduling
+* Blood transfusion history
+* Medication reminders
+* Push notifications
+* Emergency blood request alerts
+* Hospital integration
+* Urdu language support
+* Voice-assisted interface
+* Health tips and educational resources
+* Dark mode
+* Profile editing
+* Admin dashboard
 
-Clone the repository
+## 📂 Project Structure
 
-```bash
-git clone https://github.com/YOUR_USERNAME/ThalCare.git
+```
+src/
+├── components/
+├── config/
+├── constants/
+├── context/
+├── navigation/
+├── screens/
+├── services/
+├── types/
+└── assets/
 ```
 
-Navigate to the project
+## 🎯 Vision
+
+ThalCare aims to make thalassemia management more accessible by providing patients and donors with a unified digital platform. By combining secure authentication, personalized dashboards, and cloud-based data management, the application lays the foundation for future features that will improve patient care and encourage blood donation within the community.
+
+## ⚙️ Getting Started
+
+### Clone the repository
 
 ```bash
+git clone https://github.com/aliayyan71/ThalCare.git
 cd ThalCare
 ```
 
-Install dependencies
+### Install dependencies
 
 ```bash
 npm install
 ```
 
-Start Expo
+### Start Metro
 
 ```bash
-npx expo start
+npx react-native start
 ```
 
----
+### Run Android
 
-## Firebase Setup
+```bash
+npx react-native run-android
+```
 
-Create a Firebase project and enable:
+### Run iOS
 
-- Email/Password Authentication
+```bash
+npx react-native run-ios
+```
 
-Create a Firebase configuration file and add your project credentials.
+## 📌 Development Status
 
----
+Current version includes:
 
-## Current Version
+* ✅ Firebase Authentication
+* ✅ Account type onboarding
+* ✅ Firestore profile storage
+* ✅ Patient dashboard
+* ✅ Donor dashboard
 
-### v1
-
-- Splash Screen
-- Login
-- Registration
-- Password Reset
-- Firebase Authentication
-- Home Placeholder
-
----
-
-## Planned Features
-
-- Patient Dashboard
-- Blood Transfusion Schedule
-- Appointment Tracking
-- Medication Reminders
-- Notifications
-- Urdu Language Support
-- Voice Assistance
-- Hospital Locator
-- Medical Records
-- AI Health Assistant
-- Emergency Contacts
+More healthcare-focused features are actively being developed.
 
 ---
 
-## License
-
-This project is licensed under the MIT License.
+Made with ❤️ to improve thalassemia patient care.
