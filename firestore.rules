@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function validBloodGroup(group) {
+      return group in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    }
+
+    function validProfile(userId) {
+      let profile = request.resource.data;
+      let baseFields = ['uid', 'accountType', 'age', 'bloodGroup', 'phoneNumber', 'completedAt'];
+      let patientFields = ['emergencyContact', 'treatingHospital'];
+      let hasValidBase = profile.keys().hasAll(baseFields)
+        && profile.uid == userId
+        && profile.age is int && profile.age >= 1 && profile.age <= 120
+        && validBloodGroup(profile.bloodGroup)
+        && profile.phoneNumber is string && profile.phoneNumber.size() >= 7 && profile.phoneNumber.size() <= 20
+        && profile.completedAt is string;
+
+      return hasValidBase && (
+        (profile.accountType == 'donor' && profile.keys().hasOnly(baseFields)) ||
+        (profile.accountType == 'patient'
+          && profile.keys().hasOnly(['uid', 'accountType', 'age', 'bloodGroup', 'phoneNumber', 'completedAt', 'emergencyContact', 'treatingHospital'])
+          && profile.emergencyContact is string
+          && profile.emergencyContact.size() >= 7 && profile.emergencyContact.size() <= 20
+          && profile.treatingHospital is string
+          && profile.treatingHospital.size() > 0 && profile.treatingHospital.size() <= 160)
+      );
+    }
+
+    function validDonorDirectoryEntry(donorId) {
+      let donor = request.resource.data;
+      return donor.keys().hasOnly(['uid', 'accountType', 'bloodGroup', 'updatedAt'])
+        && donor.keys().hasAll(['uid', 'accountType', 'bloodGroup', 'updatedAt'])
+        && donor.uid == donorId
+        && donor.accountType == 'donor'
+        && validBloodGroup(donor.bloodGroup);
+    }
+
+    // Full profiles can only be accessed by their owners.
+    match /profiles/{userId} {
+      allow get: if owns(userId);
+      allow list: if false;
+      allow create, update: if owns(userId) && validProfile(userId);
+      allow delete: if owns(userId);
+    }
+
+    // This collection deliberately contains no contact or medical details.
+    // Authenticated users can query it only to identify compatible donor blood groups.
+    match /donorDirectory/{donorId} {
+      allow get, list: if signedIn();
+      allow create, update: if owns(donorId) && validDonorDirectoryEntry(donorId);
+      allow delete: if owns(donorId);
+    }
+  }
+}

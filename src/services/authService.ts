@@ -5,6 +5,7 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   User,
+  Auth,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '../config/firebase';
 import { toAuthEmail } from '../utils/validation';
@@ -18,10 +19,12 @@ export class AuthConfigurationError extends Error {
   }
 }
 
-function assertFirebaseConfigured(): asserts auth is NonNullable<typeof auth> {
+function getConfiguredAuth(): Auth {
   if (!isFirebaseConfigured || !auth) {
     throw new AuthConfigurationError();
   }
+
+  return auth;
 }
 
 function mapFirebaseError(code: string): string {
@@ -51,10 +54,10 @@ function handleAuthError(error: unknown): never {
 }
 
 export async function login(identifier: string, password: string): Promise<User> {
-  assertFirebaseConfigured();
+  const configuredAuth = getConfiguredAuth();
   try {
     const email = toAuthEmail(identifier);
-    const result = await signInWithEmailAndPassword(auth, email, password);
+    const result = await signInWithEmailAndPassword(configuredAuth, email, password);
     return result.user;
   } catch (error) {
     handleAuthError(error);
@@ -66,10 +69,10 @@ export async function register(
   email: string,
   password: string,
 ): Promise<User> {
-  assertFirebaseConfigured();
+  const configuredAuth = getConfiguredAuth();
   try {
     const result = await createUserWithEmailAndPassword(
-      auth,
+      configuredAuth,
       email.trim().toLowerCase(),
       password,
     );
@@ -81,15 +84,14 @@ export async function register(
 }
 
 export async function resetPassword(email: string): Promise<void> {
-  assertFirebaseConfigured();
+  const configuredAuth = getConfiguredAuth();
   try {
-    await sendPasswordResetEmail(auth, email.trim().toLowerCase());
+    await sendPasswordResetEmail(configuredAuth, email.trim().toLowerCase());
   } catch (error) {
     handleAuthError(error);
   }
 }
 
 export async function logout(): Promise<void> {
-  assertFirebaseConfigured();
-  await signOut(auth);
+  await signOut(getConfiguredAuth());
 }
