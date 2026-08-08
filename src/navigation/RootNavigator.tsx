@@ -9,6 +9,7 @@ import { RegisterScreen } from '../screens/RegisterScreen';
 import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { RequestDonationScreen } from '../screens/RequestDonationScreen';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../constants/theme';
 
@@ -17,7 +18,7 @@ const AuthStack = createNativeStackNavigator<
 >();
 
 const AppStack = createNativeStackNavigator<
-  Pick<RootStackParamList, 'Onboarding' | 'Home'>
+  Pick<RootStackParamList, 'Onboarding' | 'Home' | 'RequestDonation'>
 >();
 
 function AuthNavigator() {
@@ -51,6 +52,7 @@ function MainNavigator() {
     >
       <AppStack.Screen name="Onboarding" component={OnboardingScreen} />
       <AppStack.Screen name="Home" component={HomeScreen} />
+      <AppStack.Screen name="RequestDonation" component={RequestDonationScreen} />
     </AppStack.Navigator>
   );
 }

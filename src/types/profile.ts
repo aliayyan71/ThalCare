@@ -8,6 +8,7 @@ export type UserProfile = {
   phoneNumber: string;
   emergencyContact?: string;
   treatingHospital?: string;
+  isAvailable?: boolean;
   completedAt: string;
 };
 
@@ -15,4 +16,5 @@ export type DonorDirectoryEntry = {
   uid: string;
   accountType: 'donor';
   bloodGroup: string;
+  isAvailable: boolean;
 };

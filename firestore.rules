@@ -14,10 +14,35 @@ service cloud.firestore {
       return group in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
     }
 
+    function compatibleDonorGroups(recipientGroup) {
+      return recipientGroup == 'O-' ? ['O-']
+        : recipientGroup == 'O+' ? ['O-', 'O+']
+        : recipientGroup == 'A-' ? ['O-', 'A-']
+        : recipientGroup == 'A+' ? ['O-', 'O+', 'A-', 'A+']
+        : recipientGroup == 'B-' ? ['O-', 'B-']
+        : recipientGroup == 'B+' ? ['O-', 'O+', 'B-', 'B+']
+        : recipientGroup == 'AB-' ? ['O-', 'A-', 'B-', 'AB-']
+        : recipientGroup == 'AB+' ? ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+']
+        : [];
+    }
+
+    function donationRequestId(patientId, bloodGroup) {
+      return patientId + '_' + (
+        bloodGroup == 'A+' ? 'Aplus'
+        : bloodGroup == 'A-' ? 'Aminus'
+        : bloodGroup == 'B+' ? 'Bplus'
+        : bloodGroup == 'B-' ? 'Bminus'
+        : bloodGroup == 'AB+' ? 'ABplus'
+        : bloodGroup == 'AB-' ? 'ABminus'
+        : bloodGroup == 'O+' ? 'Oplus'
+        : bloodGroup == 'O-' ? 'Ominus'
+        : 'invalid'
+      );
+    }
+
     function validProfile(userId) {
       let profile = request.resource.data;
       let baseFields = ['uid', 'accountType', 'age', 'bloodGroup', 'phoneNumber', 'completedAt'];
-      let patientFields = ['emergencyContact', 'treatingHospital'];
       let hasValidBase = profile.keys().hasAll(baseFields)
         && profile.uid == userId
         && profile.age is int && profile.age >= 1 && profile.age <= 120
@@ -26,7 +51,10 @@ service cloud.firestore {
         && profile.completedAt is string;
 
       return hasValidBase && (
-        (profile.accountType == 'donor' && profile.keys().hasOnly(baseFields)) ||
+        (profile.accountType == 'donor'
+          && profile.keys().hasOnly(['uid', 'accountType', 'age', 'bloodGroup', 'phoneNumber', 'completedAt', 'isAvailable'])
+          && profile.isAvailable is bool)
+        ||
         (profile.accountType == 'patient'
           && profile.keys().hasOnly(['uid', 'accountType', 'age', 'bloodGroup', 'phoneNumber', 'completedAt', 'emergencyContact', 'treatingHospital'])
           && profile.emergencyContact is string
@@ -38,14 +66,103 @@ service cloud.firestore {
 
     function validDonorDirectoryEntry(donorId) {
       let donor = request.resource.data;
-      return donor.keys().hasOnly(['uid', 'accountType', 'bloodGroup', 'updatedAt'])
-        && donor.keys().hasAll(['uid', 'accountType', 'bloodGroup', 'updatedAt'])
+      return donor.keys().hasOnly(['uid', 'accountType', 'bloodGroup', 'isAvailable', 'updatedAt'])
+        && donor.keys().hasAll(['uid', 'accountType', 'bloodGroup', 'isAvailable', 'updatedAt'])
         && donor.uid == donorId
         && donor.accountType == 'donor'
-        && validBloodGroup(donor.bloodGroup);
+        && validBloodGroup(donor.bloodGroup)
+        && donor.isAvailable is bool;
     }
 
-    // Full profiles can only be accessed by their owners.
+    function isPatient(userId) {
+      return owns(userId)
+        && exists(/databases/$(database)/documents/profiles/$(userId))
+        && get(/databases/$(database)/documents/profiles/$(userId)).data.accountType == 'patient';
+    }
+
+    function isCurrentPatientsRequestId(requestId) {
+      return signedIn()
+        && isPatient(request.auth.uid)
+        && (
+          requestId == donationRequestId(request.auth.uid, 'A+')
+          || requestId == donationRequestId(request.auth.uid, 'A-')
+          || requestId == donationRequestId(request.auth.uid, 'B+')
+          || requestId == donationRequestId(request.auth.uid, 'B-')
+          || requestId == donationRequestId(request.auth.uid, 'AB+')
+          || requestId == donationRequestId(request.auth.uid, 'AB-')
+          || requestId == donationRequestId(request.auth.uid, 'O+')
+          || requestId == donationRequestId(request.auth.uid, 'O-')
+        );
+    }
+
+    function donorCanViewRequest(requestData) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/donorDirectory/$(request.auth.uid))
+        && get(/databases/$(database)/documents/donorDirectory/$(request.auth.uid)).data.isAvailable == true
+        && requestData.status == 'open'
+        && requestData.visibleToDonorGroups.hasAny([
+          get(/databases/$(database)/documents/donorDirectory/$(request.auth.uid)).data.bloodGroup
+        ]);
+    }
+
+    function validNewRequest(patientId, requestId) {
+      let donation = request.resource.data;
+      let expectedGroups = compatibleDonorGroups(donation.requestedBloodGroup);
+      return donation.keys().hasOnly(['patientId', 'requestedBloodGroup', 'compatibleDonorGroups', 'visibleToDonorGroups', 'status', 'createdAt', 'updatedAt'])
+        && donation.keys().hasAll(['patientId', 'requestedBloodGroup', 'compatibleDonorGroups', 'visibleToDonorGroups', 'status', 'createdAt', 'updatedAt'])
+        && donation.patientId == patientId
+        && validBloodGroup(donation.requestedBloodGroup)
+        && requestId == donationRequestId(patientId, donation.requestedBloodGroup)
+        && donation.compatibleDonorGroups == expectedGroups
+        && donation.visibleToDonorGroups == expectedGroups
+        && donation.status == 'open'
+        && donation.createdAt is timestamp
+        && donation.updatedAt is timestamp;
+    }
+
+    function requestIsOwnedByCurrentUser(requestId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/donationRequests/$(requestId)).data.patientId == request.auth.uid;
+    }
+
+    function donorCanRespond(requestId, donorId) {
+      let donation = get(/databases/$(database)/documents/donationRequests/$(requestId)).data;
+      let donor = get(/databases/$(database)/documents/donorDirectory/$(donorId)).data;
+      return owns(donorId)
+        && donation.status == 'open'
+        && donor.isAvailable == true
+        && donation.visibleToDonorGroups.hasAny([donor.bloodGroup]);
+    }
+
+    function validDonorResponse(donorId) {
+      let response = request.resource.data;
+      return response.keys().hasOnly(['donorId', 'response', 'respondedAt'])
+        && response.keys().hasAll(['donorId', 'response', 'respondedAt'])
+        && response.donorId == donorId
+        && response.response in ['accepted', 'declined']
+        && response.respondedAt is timestamp;
+    }
+
+    function validContactGrant(grantId, donorId) {
+      let grant = request.resource.data;
+      let requestId = grant.requestId;
+      let donation = get(/databases/$(database)/documents/donationRequests/$(requestId)).data;
+      let donorProfile = get(/databases/$(database)/documents/profiles/$(donorId)).data;
+      let responseAfter = getAfter(/databases/$(database)/documents/donationRequests/$(requestId)/responses/$(donorId)).data;
+      return grant.keys().hasOnly(['patientId', 'donorId', 'requestId', 'phoneNumber', 'createdAt'])
+        && grant.keys().hasAll(['patientId', 'donorId', 'requestId', 'phoneNumber', 'createdAt'])
+        && requestId is string
+        && grantId == grant.patientId + '_' + donorId
+        && grant.donorId == donorId
+        && grant.patientId == donation.patientId
+        && donorProfile.accountType == 'donor'
+        && grant.phoneNumber == donorProfile.phoneNumber
+        && donorCanRespond(requestId, donorId)
+        && responseAfter.donorId == donorId
+        && responseAfter.response == 'accepted'
+        && grant.createdAt is timestamp;
+    }
+
     match /profiles/{userId} {
       allow get: if owns(userId);
       allow list: if false;
@@ -53,12 +170,44 @@ service cloud.firestore {
       allow delete: if owns(userId);
     }
 
-    // This collection deliberately contains no contact or medical details.
-    // Authenticated users can query it only to identify compatible donor blood groups.
+    // Only minimal, non-contact information is discoverable for matching.
     match /donorDirectory/{donorId} {
       allow get, list: if signedIn();
       allow create, update: if owns(donorId) && validDonorDirectoryEntry(donorId);
       allow delete: if owns(donorId);
+    }
+
+    // A request is private to its patient and compatible, available donors.
+    match /donationRequests/{requestId} {
+      allow get: if owns(resource.data.patientId)
+        || donorCanViewRequest(resource.data)
+        || isCurrentPatientsRequestId(requestId);
+      allow list: if owns(resource.data.patientId) || donorCanViewRequest(resource.data);
+      allow create: if isPatient(request.resource.data.patientId)
+        && validNewRequest(request.resource.data.patientId, requestId);
+      allow update: if false;
+      allow delete: if isPatient(resource.data.patientId);
+    }
+
+    // A donor's phone number is copied here only after they accept a request.
+    // The requesting patient can read only their own direct grant document.
+    match /donationContactGrants/{grantId} {
+      allow get: if owns(resource.data.patientId) || owns(resource.data.donorId);
+      allow list: if false;
+      allow create: if owns(request.resource.data.donorId)
+        && validContactGrant(grantId, request.resource.data.donorId);
+      allow update: if false;
+      allow delete: if owns(resource.data.donorId);
+    }
+
+    // Responses are visible only to the donor who sent one and the requesting patient.
+    match /donationRequests/{requestId}/responses/{donorId} {
+      allow get, list: if owns(donorId) || requestIsOwnedByCurrentUser(requestId);
+      allow create: if donorCanRespond(requestId, donorId) && validDonorResponse(donorId);
+      allow update: if donorCanRespond(requestId, donorId)
+        && validDonorResponse(donorId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['response', 'respondedAt']);
+      allow delete: if false;
     }
   }
 }

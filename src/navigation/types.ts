@@ -5,4 +5,5 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   Onboarding: undefined;
   Home: undefined;
+  RequestDonation: undefined;
 };

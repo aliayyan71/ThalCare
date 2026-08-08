@@ -18,8 +18,7 @@ import { colors, radii, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { AccountType } from '../types/profile';
 import { RootStackParamList } from '../navigation/types';
-
-const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+import { bloodGroups } from '../constants/bloodCompatibility';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
@@ -83,7 +82,7 @@ export function OnboardingScreen({ navigation }: Props) {
               emergencyContact: emergencyContact.trim(),
               treatingHospital: treatingHospital.trim(),
             }
-          : {}),
+          : { isAvailable: false }),
         completedAt: new Date().toISOString(),
       });
       navigation.reset({
