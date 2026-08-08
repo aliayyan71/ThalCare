@@ -2,46 +2,46 @@
 
 ThalCare is a mobile application built with **React Native** to improve the quality of life for thalassemia patients by simplifying healthcare management and connecting patients with blood donors. The app aims to provide an accessible digital platform where patients can securely manage their health information while enabling donors to support the thalassemia community more effectively.
 
-> **Status:** 🚧 Active Development V2.0
+> **Status:** 🚧 Active Development V3.0
 
 ## 📱 Demo
 
 https://github.com/user-attachments/assets/7de2d1ce-487e-4157-b144-6e68886c985d
 
-## ✨ Features
+## 🚀 Current Features
 
-### ✅ Authentication
+### 🔐 Authentication
+- Patient and donor registration
+- Firebase Authentication
+- Login and account management
+- Form validation
 
-* Secure user registration and login
-* Firebase Authentication integration
-* Password reset via email
+### 👤 Patient Profiles
+- Patient-specific profiles stored in Firestore
+- Blood group information
+- Patient dashboard
+- Personalized account information
 
-### ✅ User Profiles
+### 🩸 Donor Profiles
+- Donor-specific profiles
+- Blood group information
+- Donor dashboard
+- Toggle availability to donate
 
-* Cloud Firestore integration
-* Secure profile storage
-* Separate profile data for different user roles
+### 📢 Blood Donation Requests
 
-### ✅ Role-Based Experience
+Patients can request blood directly through the application.
 
-Users choose their role during onboarding:
+The current flow is:
 
-* 🩸 **Patient**
-* ❤️ **Blood Donor**
+1. Patient selects **Send a Request**
+2. ThalCare identifies available donors with the required blood group
+3. The request is sent to all eligible available donors
+4. The patient can cancel the request before it is accepted
+5. When a donor accepts the request, their phone number becomes visible to the patient
+6. The patient can contact the donor directly
 
-Each role is provided with its own dedicated dashboard and user experience.
-
-### ✅ Dashboards
-
-#### Patient Dashboard
-
-* Personalized patient interface
-* Foundation for future appointment tracking, transfusion history, medication reminders, and health monitoring
-
-#### Donor Dashboard
-
-* Dedicated donor interface
-* Designed for future blood donation requests, donation history, and patient matching
+This creates a simple patient → donor connection without requiring patients to manually search for donors.
 
 ## 🛠️ Tech Stack
 
@@ -58,28 +58,35 @@ Each role is provided with its own dedicated dashboard and user experience.
 
 ## 📱 Current App Flow
 
-```
+```text
 Splash Screen
-      │
-      ▼
- Login / Register
-      │
-      ▼
- Account Type Selection
-(Patient / Blood Donor)
-      │
-      ▼
- Create Profile
-      │
-      ▼
-Role-Based Dashboard
+      ↓
+    Login
+   ↙     ↘
+Register   Account
+     ↓
+ Onboarding
+   ↙     ↘
+Patient   Donor
+   ↓        ↓
+Patient   Donor
+Dashboard Dashboard
+   ↓        ↓
+Request   Toggle
+Blood     Availability
+   ↓
+Available Eligible
+Donors
+   ↓
+Send Request
+   ↓
+Donor Accepts
+   ↓
+Contact Donor
 ```
 
 ## 🚀 Planned Features
 
-* Blood donation request system
-* Intelligent donor matching
-* Blood compatibility checking
 * Appointment scheduling
 * Blood transfusion history
 * Medication reminders
@@ -94,7 +101,6 @@ Role-Based Dashboard
 * Admin dashboard
 
 ## 📂 Project Structure
-
 ```
 src/
 ├── components/
@@ -154,6 +160,7 @@ Current version includes:
 * ✅ Firestore profile storage
 * ✅ Patient dashboard
 * ✅ Donor dashboard
+* ✅ Blood Donation Requests
 
 More healthcare-focused features are actively being developed.
 
